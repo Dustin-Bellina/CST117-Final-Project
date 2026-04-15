@@ -1,12 +1,12 @@
 /*
 Dustin Bellina
 
-I tried to implement procedural dungeon generation for replayability but that is absolutely not happening in the given timeframe.
-The map generation works roughly how Rogue works:
+This is the behind-the-scenes system tying everything together.  I tried to implement procedural dungeon generation for replayability but that is absolutely not happening in the given timeframe.
+The map works roughly how Rogue works:
 	1. Split the map area into 9 subsections and place one room max randomly in each.
 	2. Place the objects that absolutely need to be there (exits, signs, shop, etc.)
-	3. Randomly place any other items (Not implemented)
-	4. Spawn enemies (Not implemented)
+	3. Randomly place any other items
+	4. Spawn enemies
 
 Functions:
 	clearScreen(): clears the screen
@@ -22,13 +22,6 @@ Functions:
 
 
 using namespace std;
-
-
-void clearScreen();
-void drawMap(string(*map)[MAP_HEIGHT][MAP_WIDTH]);
-void generateRoom(string(*map)[MAP_HEIGHT][MAP_WIDTH], int rW, int rH, int rX, int rY);
-void generateTown(string(*map)[MAP_HEIGHT][MAP_WIDTH], int (*playerXY)[2]);
-
 
 void clearScreen() {
 	cout << "\033[2J\033[1;1H";

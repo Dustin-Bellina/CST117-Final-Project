@@ -1,7 +1,3 @@
-/*
-Dustin Bellina
-*/
-
 #include <iostream>
 #include <string>
 
@@ -10,9 +6,13 @@ Dustin Bellina
 #endif
 
 #include "defs.h"
+#include "structs.h"
 #include "prototypes.h"
 
 using namespace std;
+
+
+void keys();
 
 
 int main() {
@@ -21,13 +21,19 @@ int main() {
 		SetConsoleOutputCP(65001);
 	#endif
 
+	cout << "\033[?25l";	// Hide the cursor
+
 	string map[MAP_HEIGHT][MAP_WIDTH];
+	playerType player;
 	int playerXY[2];
 
-	
+	initializePlayer(player);
+
+	mainMenu(player);
+
 	generateTown(&map, &playerXY);
 
-	keyDetector(&map, &playerXY, "");
+	inputDetector(&map, player, &playerXY, "");
 
 	return 0;
 }
