@@ -6,8 +6,6 @@ Functions:
     wait(): Waits for the player to press any key
 */
 
-// This file will eventually contain code for a mini text engine.  Nothing too big, just enough to get by
-
 #include <iostream>
 #include <conio.h>
 #include <string>
