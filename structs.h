@@ -10,6 +10,10 @@ struct playerType {
     int swordDamage;
     int bread;
     int gold;
+
+    std::string level;
+    int x;
+    int y;
 };
 
 #endif

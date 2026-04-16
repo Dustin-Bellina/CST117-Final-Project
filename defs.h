@@ -1,9 +1,13 @@
+#ifndef DEFS_H
+#define DEFS_H
+
 // Convenience
 #define elif else if
 
 #define KEY_ESC 27
 #define KEY_ENTER 13
 #define KEY_FORWARD_SLASH 47
+#define KEY_SPACE 32
 
 // Arrow Keys
 #define KEY_UP 72
@@ -74,5 +78,19 @@
 
 // Character Codes
 #define PLAYER "@"
+#define SIGN "↑"
 #define SHOP "⌂"
 #define SEWER_ENTERANCE "☼"
+
+// ANSI Escape Codes for Text
+#define CURSOR_HOME "\033[H"
+#define CLEAR_LINE "\033[2K"
+#define RESET_STYLE "\033[0m"
+#define MORE "\033[47;30m MORE "
+
+#define FG_GREY "\033[90m"
+#define FG_RED "\033[41m"
+
+#define BG_GREY "\033[100m"
+
+#endif

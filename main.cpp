@@ -11,9 +11,7 @@
 
 using namespace std;
 
-
 void keys();
-
 
 int main() {
 	// Ensure Windows outputs the wall characters properly
@@ -21,19 +19,24 @@ int main() {
 		SetConsoleOutputCP(65001);
 	#endif
 
-	cout << "\033[?25l";	// Hide the cursor
+	//#define DEBUG_MODE
+	#ifdef DEBUG_MODE
+		keys();
+	#else
+		cout << "\033[?25l";	// Hide the cursor to look more professional
 
-	string map[MAP_HEIGHT][MAP_WIDTH];
-	playerType player;
-	int playerXY[2];
+		string map[MAP_HEIGHT][MAP_WIDTH];
+		playerType player;
 
-	initializePlayer(player);
+		initializePlayer(player);
 
-	mainMenu(player);
+		mainMenu(player);
 
-	generateTown(&map, &playerXY);
+		generateTown(&map, player);
+		drawMap(&map);
 
-	inputDetector(&map, player, &playerXY, "");
+		inputDetector(&map, player);
+	#endif
 
 	return 0;
 }

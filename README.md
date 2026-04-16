@@ -36,3 +36,54 @@ Changelog
 ### Additional Notes:
 - Can now enter the shop, purchase things, and use items!
 - No Sewer for now :( Coming hopefully next update
+
+---
+---
+# 4/16/2026 2:52PM
+## The Text Engine Update
+### main.cpp
+\+ Added proper debug mode implementation - To remove in final project
+
+: Accounted for playerType changes
+
+### menus.cpp
+\+ Created signHandler() to display sign text
+
+: Added onto menuHandler()
+
+: Prettified the help menu and implemented text engine
+
+: Changed how text gets outputted for a cleaner result and to account for the added text engine
+
+: Moved initializePlayer(), saveGame(), and loadGame() to data_management.cpp
+
+### data_management.cpp
+\+ Created file
+
+### input_detection.cpp
+\+ Added various inputs
+
+: Modified function to account for playerType change
+
+### movement.cpp
+: Modified function to account for the playerType change
+
+: Added all walls and empty space as an unmovable object for the player
+
+### map_generation.cpp
+\+ Created generateSewer() and filled out sublevel 1
+
+\+ Created generateHall()
+
+: Modified functions to account for the playerType change
+
+: Modified clearScreen() to not spam the console
+
+### text_engine.cpp
+\+ Created file
+
+\+ Created te_print()
+
+\+ Created te_error()
+
+\+ Created more()
