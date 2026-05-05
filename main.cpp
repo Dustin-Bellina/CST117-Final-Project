@@ -1,42 +1,71 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 #ifdef _WIN32
-	#include <windows.h>	// Windows API
+#include <windows.h>
 #endif
 
 #include "defs.h"
+#include "globals.h"
+#include "classes.h"
 #include "structs.h"
 #include "prototypes.h"
 
 using namespace std;
 
-void keys();
-
 int main() {
-	// Ensure Windows outputs the wall characters properly
-	#ifdef _WIN32
-		SetConsoleOutputCP(65001);
-	#endif
+	// Ensure Windows displays the characters properly
+    #ifdef _WIN32
+        SetConsoleOutputCP(65001);
+    #endif
 
-	//#define DEBUG_MODE
-	#ifdef DEBUG_MODE
-		keys();
-	#else
-		cout << "\033[?25l";	// Hide the cursor to look more professional
+    // Hide the cursor so it's not an eyesore
+    hideCursor();
 
-		string map[MAP_HEIGHT][MAP_WIDTH];
-		playerType player;
+    string map[2][MAP_HEIGHT][MAP_WIDTH];   // Map is broken into 2 layers: The actual map, and what is revealed in the map
+    playerType player;
 
-		initializePlayer(player);
+    vector<Enemy*> enemies;
+    enemies.reserve(MAX_ENEMIES);
 
-		mainMenu(player);
+    initializePlayer(player);
 
-		generateTown(&map, player);
-		drawMap(&map);
+    mainMenu(player);
 
-		inputDetector(&map, player);
-	#endif
+    loadLevel(&map, player, enemies);
+    drawMap(&map, player);
 
-	return 0;
+    displayStatus(player);
+
+    string object = "";
+
+    // Game Loop
+    while (true) {
+        // Let the player take their turn
+        inputDetector(&map, player, enemies, object);
+
+        // Let every enemy take their turn if they are aggro'd
+        for (Enemy* e : enemies) {
+            if (e->getAggro()) {
+                enemyTurn(&map, player, e);
+            }
+        }
+
+        // Print all messages
+        flushMessages();
+
+        // Heal the player every 10 non-combatant turns
+        if (TURN == 10) {
+            healPlayer(player, rollDie(4));
+            TURN = 0;
+        }
+
+        // Display the player's status
+        displayStatus(player);
+
+        if (DEBUG_ENEMIES) enemyStatus(enemies);
+    }
+
+    return 0;
 }

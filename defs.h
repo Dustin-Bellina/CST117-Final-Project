@@ -1,13 +1,25 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-// Convenience
 #define elif else if
 
-#define KEY_ESC 27
-#define KEY_ENTER 13
-#define KEY_FORWARD_SLASH 47
-#define KEY_SPACE 32
+// Debug Flags
+#define DEBUG_MAP false
+#define DEBUG_KEYS false
+#define DEBUG_ENEMIES false
+#define GODMODE false
+
+// Screen/Map Dimensions
+#define SCREEN_HEIGHT 25
+#define SCREEN_WIDTH 80
+#define MAP_HEIGHT 20
+#define MAP_WIDTH 77
+#define MAX_ROOM_HEIGHT 6
+#define MAX_ROOM_WIDTH 25
+
+// Limits per Room
+#define MAX_ENEMIES 3
+#define MAX_ITEMS 5
 
 // Arrow Keys
 #define KEY_UP 72
@@ -27,45 +39,28 @@
 #define KEY_8 56
 #define KEY_9 57
 
-// Lowercase Letter Keys
+// Letter Keys
 #define KEY_a 97
 #define KEY_b 98
 #define KEY_c 99
-#define KEY_d 100
+#define KEY_d 100   // DEBUG
 #define KEY_e 101
-#define KEY_f 102
-#define KEY_g 103
-#define KEY_h 104
+#define KEY_g 103   // DEBUG
 #define KEY_i 105
-#define KEY_j 106
-#define KEY_k 107
-#define KEY_l 108
-#define KEY_m 109
-#define KEY_n 110
-#define KEY_o 111
-#define KEY_p 112
-#define KEY_q 113
-#define KEY_r 114
 #define KEY_s 115
-#define KEY_t 116
-#define KEY_u 117
-#define KEY_v 118
-#define KEY_w 119
-#define KEY_x 120
 #define KEY_y 121
-#define KEY_z 122
 
-// Screen Dimensions
-#define SCREEN_HEIGHT 25
-#define SCREEN_WIDTH 80
+// Special Keys
+#define KEY_ENTER 13
+#define KEY_ESC 27
+#define KEY_FORWARD_SLASH 47
+#define KEY_SPACE 32
+#define KEY_PgUp 73
+#define KEY_PgDn 81
+#define KEY_HOME 71
+#define KEY_END 79
 
-// Map Dimensions
-#define MAP_HEIGHT 20
-#define MAP_WIDTH 77
-#define MAX_ROOM_HEIGHT 6
-#define MAX_ROOM_WIDTH 25
-
-// Walls
+// Map Symbols
 #define TL_WALL "╔"
 #define BL_WALL "╚"
 #define TR_WALL "╗"
@@ -75,22 +70,37 @@
 #define DOOR "╬"
 #define HALL "▒"
 #define FLOOR "."
-
-// Character Codes
 #define PLAYER "@"
-#define SIGN "↑"
 #define SHOP "⌂"
-#define SEWER_ENTERANCE "☼"
+#define ENTERANCE "☼"
 
-// ANSI Escape Codes for Text
+// Item Symbols
+#define GOLD "☉"
+#define SIGN "↑"
+#define BREAD "♣"
+#define POTION "♪"
+
+// ANSI Escape Codes
 #define CURSOR_HOME "\033[H"
 #define CLEAR_LINE "\033[2K"
-#define RESET_STYLE "\033[0m"
-#define MORE "\033[47;30m MORE "
-
+#define FG_BLACK "\033[30m"
 #define FG_GREY "\033[90m"
-#define FG_RED "\033[41m"
-
+#define FG_RED "\033[31m"
 #define BG_GREY "\033[100m"
+#define BG_RED "\033[41m"
+#define BG_GREEN "\033[42m"
+#define BG_WHITE "\033[47m"
+#define RESET_STYLE "\033[0m"
+
+// Player Stat Calculations
+#define STRENGTH_MODIFIER(s) ((int)floor(((s) - 10) / 2.0))
+#define PLAYER_DAMAGE (rollDie(8, player.level) + 1 + STRENGTH_MODIFIER(player.strength))
+
+// Item List
+inline const std::string ITEM_LIST[] = {
+    BREAD,
+    GOLD,
+    POTION
+};
 
 #endif

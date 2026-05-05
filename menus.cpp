@@ -1,18 +1,21 @@
 /*
 Alir Louis
 
+Contains all the menu UI and some logic for the menus
+
 Functions:
-menuHandler(): Redirects player to the proper menu
+menuHandler() : Redirects player to the proper menu
+signHandler() : Print the appropriate sign text to the top of the screen
 mainMenu()
 helpMenu()
 inventoryMenu()
 statsMenu()
 shopMenu()
-sewerMenu(): Gonna remove once I get the sewer up and running
 potionMenu()
 breadMenu()
-swordMenu()
-armorMenu()
+
+deathMenu()
+winMenu()
 */
 
 #include <iostream>
@@ -26,12 +29,8 @@ armorMenu()
 using namespace std;
 
 
-int breadHealing = 5;
+int breadHealing = 1;
 
-// If any default player data needs to be changed, it should be done in initializePlayer(). 
-// If a new player stat needs to be added, add it in playerType in structs.h and initialize it in initializePlayer()
-
-// again these can be changed here and it will change everywhere in the code...i think, these are just testing numbers for the shop, they can be changed to whatever you want
 int shopHealthPotionPrice = 10;
 int shopStrengthPotionPrice = 15;
 int shopBreadPrice = 5;
@@ -39,38 +38,34 @@ int shopHealthPotionsStock = 5;
 int shopStrengthPotionsStock = 3;
 int shopBreadStock = 10;
 
-//im pretty new to this, my fault if it aint too advanced or clean
-//im learning as i go, but this is just the basic structure of the game, we can add more features and functionality later on, 
-// lemme know if this is too much or there's a better way to do this.
-
-void menuHandler(string (*map)[MAP_HEIGHT][MAP_WIDTH], playerType &player, string &object) {
+void menuHandler(string (*map)[2][MAP_HEIGHT][MAP_WIDTH], playerType &player, vector<Enemy*>& enemies, string &object) {
     if      (object == SHOP)            { shopMenu(player); }
-    elif    (object == SEWER_ENTERANCE) { object = "";  generateSewer(map, player); }
+    elif    (object == ENTERANCE) { object = "";  loadLevel(map, player, enemies); }
     elif    (object == SIGN)            { signHandler(player); }
 }
 
 void signHandler(playerType& player) {
-    string level = player.level;
+    string stage = player.stage;
+    int sublevel = player.sublevel;
 
-    if (level == "SEWER_1") { te_print("Beware of rats, slime, and other dangers below."); }
-    wait();
+    if (stage == "SEWER" && sublevel == 1) { message("Beware of rats, slime, and other dangers below."); }
 }
 
 void mainMenu(playerType &player) {
-    clearScreen();
-
     int choice = 0;
 
     while (choice != '5') {
+        clearScreen();
+
         cout << "\n\n==== TEXT ROGUELIKE ====" << "\n"
             << "1. Start Game" << "\n"
             << "2. Load Game" << "\n"
             << "3. Save Game" << "\n"
             << "4. Help" << "\n"
-            << "5. Exit" << endl;
+            << "5. Save & Exit" << "\n"
+            << "6. Exit Without Saving" << endl;
 
         choice = _getch();
-        clearScreen();
 
         if (choice == '1') {
             break;  // Return to the function that called this to either start a new game or continue game in progress
@@ -87,8 +82,17 @@ void mainMenu(playerType &player) {
         else if (choice == '5') {
             saveGame(player);
             te_print("Run saved. Exiting world...");
-            cout << endl;
-            exit(1);
+            clearScreen();
+            showCursor();
+            exit(0);
+        }
+        else if (choice == KEY_6) {
+            te_error("Are you sure you want to exit without saving? y/N");
+            if (_getch() == KEY_y) {
+                clearScreen();
+                showCursor();
+                exit(0);
+            }
         }
         else {
             cout << "Invalid choice. Please select a number 1-5." << flush;
@@ -96,7 +100,6 @@ void mainMenu(playerType &player) {
     }
 }
 
-// of course the help menu. i placed some placeholder text in there for now, but we can change it to whatever we want, 
 // this is just to give the player some information about the game and how to play it,
 void helpMenu() {
     clearScreen();
@@ -109,33 +112,25 @@ void helpMenu() {
         more();
         clearScreen();
         cout << "\n\n==== CONTROLS ====" << "\n"
-            << "Arrow Keys: Move your character" << "\n"
-            << "7: Move North West" << "\n"
-            << "9: Move North East" << "\n"
-            << "1: Move South West" << "\n"
-            << "3: Move South East" << "\n"
+            << "Arrow Keys: Move your character cardinally" << "\n"
+            << "HOME, END, PgUp, PgDn: Move your character intercardinally"
             << "e: Eat bread" << "\n"
             << "i: Open inventory" << "\n"
             << "/: Open help menu" << "\n"
-            << "SPACE: Advance Text or Menu" << flush;
+            << "SPACE: Advance Text" << flush;
         more();
         clearScreen();
         cout << "\n\n==== MENUS ====" << "\n"
-            << "In the town menu, you can go to the sewer, visit the shop, check your inventory, or view your stats." << "\n"
-            << "In the inventory menu, you can manage your potions, sword, bread, and armor." << "\n"
+            << "In the inventory menu, you can manage your potions and bread." << "\n"
             << "In the stats menu, you can view your current health, strength, armor, and how many potions you have." << "\n"
             << "In the shop menu, you can buy health potions, strength potions, and bread." << "\n"
             << "In the potion menu, you can drink your health and strength potions to increase your stats." << "\n"
-            << "In the sword menu, you can equip, upgrade, or drop your sword." << "\n"
-            << "In the armor menu, you can equip, upgrade, or drop your armor." << "\n"
             << "\n==== SAVE / LOAD ====" << "\n"
             << "You can save your game from the main menu and load it later to continue your adventure." << "\n"
             << "Good luck, and have fun playing!" << "\n"
             << "\nESC. Back" << flush;
 
         while ((choice = _getch()) != KEY_ESC) { te_print("Invalid choice. Press ESC to exit."); }
-
-        cout << "Returning to main menu..." << endl;
     }
 }
 
@@ -148,38 +143,28 @@ void inventoryMenu(playerType &player) {
     while (choice != KEY_ESC) {
         cout << "\n\n==== INVENTORY ====" << "\n"
             << "a. Potions (" << player.healthPotions + player.strengthPotions << " total)" << "\n"
-            << "b. Sword" << "\n"
-            << "c. Bread (" << player.bread << " left)" << "\n"
-            << "d. Armor" << "\n"
+            << "b. Bread (" << player.bread << " left)" << "\n"
             << "ESC. Back" << endl;
 
         choice = _getch();
-        clearScreen();
 
         if (choice == KEY_a) {
             potionMenu(player);
             clearScreen();
         }
         else if (choice == KEY_b) {
-            swordMenu(player);
-            clearScreen();
-        }
-        else if (choice == KEY_c) {
             breadMenu(player);
             clearScreen();
         }
-        else if (choice == KEY_d) {
-            armorMenu(player);
+        else if (choice == KEY_ESC) {
             clearScreen();
         }
-        else if (choice == KEY_ESC) {
-            cout << "Returning to level..." << endl;
-        }
         else {
-            cout << "Invalid choice. Please select a letter a-d" << flush;
+            te_print("Invalid choice. Please select a letter a-d");
         }
     }
 }
+
 // this is the stats menu, you can view your current health, strength, armor, and how many potions you have, as well as your sword damage and how much gold you have!.
 void statsMenu(playerType &player) {
     clearScreen();
@@ -190,26 +175,25 @@ void statsMenu(playerType &player) {
         cout << "\n\n==== STATS ====" << "\n"
             << "Health: " << player.health << "\n"
             << "Strength: " << player.strength << "\n"
-            << "Armor: " << player.armor << "\n"
             << "Health Potions: " << player.healthPotions << "\n"
             << "Strength Potions: " << player.strengthPotions << "\n"
-            << "Sword Damage: " << player.swordDamage << "\n"
             << "Bread: " << player.bread << "\n"
             << "Gold: " << player.gold << "\n"
+            << "Level: " << player.stage << "-" << player.sublevel - 1 << "\n"
             << "\nESC. Back" << endl;
 
         choice = _getch();
-        clearScreen();
 
         if (choice == KEY_ESC) {
-            cout << "Returning to town menu..." << endl;
+            clearScreen();
         }
         else {
-            cout << "Invalid choice." << flush;
+            te_print("Invalid choice.");
         }
 
     }
 }
+
 // this is the shop menu, you can buy health potions, strength potions, and bread here, the prices and stock are displayed, if you don't have enough gold or if the item is out of stock it will let you know!.
 void shopMenu(playerType &player) {
     clearScreen();
@@ -217,7 +201,8 @@ void shopMenu(playerType &player) {
     int choice = 0;
 
     while (choice != KEY_ESC) {
-        cout << "\n\nWelcome to the shop!" << "\n\n"
+        cout << "\033[3H";
+        cout << "Welcome to the shop!" << "\n\n"
             << "a. Buy Health Potion (" << shopHealthPotionPrice << " gold) " << shopHealthPotionsStock << " left" << "\n"
             << "b. Buy Strength Potion (" << shopStrengthPotionPrice << " gold) " << shopStrengthPotionsStock << " left" << "\n"
             << "c. Buy Bread (" << shopBreadPrice << " gold) " << shopBreadStock << " left" << "\n"
@@ -225,128 +210,119 @@ void shopMenu(playerType &player) {
             << "\nESC. Back" << endl;
 
         choice = _getch();
-        clearScreen();
 
         if (choice == KEY_a) {
             if (shopHealthPotionsStock > 0) {
                 if (player.gold >= shopHealthPotionPrice) {
-                    cout << "You purchased a Health Potion." << flush;
+                    te_print("You purchased a Health Potion.");
                     player.healthPotions += 1;
                     shopHealthPotionsStock -= 1;
                     player.gold -= shopHealthPotionPrice;
                 }
                 else {
-                    cout << "You don't have enough gold to buy a Health Potion!" << flush;
+                    te_print("You don't have enough gold to buy a Health Potion!");
                 }
             }
             else {
-                cout << "No Health Potions left. We are out of stock, sorry!" << flush;
+                te_print("No Health Potions left. We are out of stock, sorry!");
             }
         }
         else if (choice == KEY_b) {
             if (shopStrengthPotionsStock > 0) {
                 if (player.gold >= shopStrengthPotionPrice) {
-                    cout << "You purchased a Strength Potion." << flush;
+                    te_print("You purchased a Strength Potion.");
                     player.strengthPotions += 1;
                     shopStrengthPotionsStock -= 1;
                     player.gold -= shopStrengthPotionPrice;
                 }
                 else {
-                    cout << "You don't have enough gold to buy a Strength Potion!" << flush;
+                    te_print("You don't have enough gold to buy a Strength Potion!");
                 }
             }
             else {
-                cout << "No Strength Potions left. We are out of stock, sorry!" << flush;
+                te_print("No Strength Potions left. We are out of stock, sorry!");
             }
         }
         else if (choice == KEY_c) {
             if (shopBreadStock > 0) {
                 if (player.gold >= shopBreadPrice) {
-                    cout << "You purchased one Bread." << flush;
+                    te_print("You purchased one Bread.");
                     player.bread += 1;
                     shopBreadStock = shopBreadStock - 1;
                     player.gold -= shopBreadPrice;
                 }
                 else {
-                    cout << "You don't have enough gold to buy Bread!" << flush;
+                    te_print("You don't have enough gold to buy Bread!");
                 }
             }
             else {
-                cout << "No Bread left. We are out of stock, sorry! " << flush;
+                te_print("No Bread left. We are out of stock, sorry! ");
             }
         }
         else if (choice == KEY_ESC) {
-            cout << "Returning to town menu..." << endl;
+            clearScreen();
         }
         else {
-            cout << "Invalid choice." << flush;
+            te_print("Invalid choice.");
         }
     }
 }
 
-// this is the sewer menu, you can enter the sewer to explore and find new items and enemies, 
-// you can also search the area to find hidden items or read the warning sign to get some information about the dangers that lurk in the sewer.
-void sewerMenu(playerType &player) {
-    te_print("You enter the sewer, the domain of filth. It is dark, damp, and full of danger lurking below.");
-}
-
-// this is the potion menu, same as the other menus, you can manage your potions here etc etc. . .
-// Dustin 4/15: I know the implementation of all the ansi stuff is dirty, but it's the best way I could find to make it do what it needed to do
 void potionMenu(playerType &player) {
     clearScreen();
 
     int choice = 0;
 
     while (choice != KEY_ESC) {
-        cout << "\n\n==== POTION MENU ====" << "\n"
-            << CLEAR_LINE <<"a. Health Potion (" << player.healthPotions << " left)" << "\n"
+        cout << "\033[3H";
+        cout << "==== POTION MENU ====" << "\n"
+            << CLEAR_LINE << "a. Health Potion (" << player.healthPotions << " left)" << "\n"
             << CLEAR_LINE << "b. Strength Potion (" << player.strengthPotions << " left)" << "\n"
             << "\nESC. Back" << endl;
 
         choice = _getch();
-        cout << CURSOR_HOME;
 
         if (choice == KEY_a) {
             if (player.healthPotions > 0) {
-                player.health += 10;
-                player.healthPotions -= 1;
-                cout << CLEAR_LINE << "You drank a Health Potion. Health is now " << player.health << ".";
+                if (player.health < player.maxHealth) {
+                    healPlayer(player, rollDie(8));
+                    player.healthPotions -= 1;
+                    te_print("You drank a Health Potion. Health is now " + to_string(player.health) + ".");
 
-                if (player.healthPotions == 0) {
-                    more();
-                    cout << CURSOR_HOME << CLEAR_LINE << "You no longer have any Health Potions left!";
+                    if (player.healthPotions == 0) {
+                        more();
+                        te_print("You no longer have any Health Potions left!");
+                    }
                 }
-
-                cout << flush;
+                else {
+                    te_print("You are at max health!");
+                }
             }
             else {
-                cout << CLEAR_LINE << "You have no Health Potions left!" << flush;
+                te_print("You have no Health Potions left!");
             }
         }
         else if (choice == KEY_b) {
             if (player.strengthPotions > 0) {
-                player.strength += 5;
+                player.strength += rollDie(4);
                 player.strengthPotions -= 1;
 
-                cout << CLEAR_LINE << "You drank a Strength Potion. Strength is now " << player.strength << ".";
+                te_print("You drank a Strength Potion. Strength is now " + to_string(player.strength) + ".");
 
                 if (player.strengthPotions == 0) {
                     more();
-                    cout << CURSOR_HOME << CLEAR_LINE <<  "You no longer have any Strength Potions left!";
+                    te_print("You no longer have any Strength Potions left!");
                 }
-
-                cout << flush;
             }
             else {
-                cout << CLEAR_LINE << "You have no Strength Potions left!" << flush;
+                te_print("You have no Strength Potions left!");
             }
         }
         else if (choice == KEY_ESC) {
-            cout << "Returning to inventory menu..." << endl;
             clearScreen();
         }
         else {
-            cout << CLEAR_LINE << "Invalid choice." << flush;
+            te_print("Invalid choice.");
         }
     }
 }
@@ -358,48 +334,33 @@ void breadMenu(playerType &player) {
 
     while (choice != KEY_ESC) {
         cout << "\n\n==== BREAD MENU ====" << "\n"
-            << "a. Eat Bread" << "\n"
-            << "d. Drop Bread" << "\n"
+            << "a. Eat Bread (" << player.bread << " left)" << "\n"
             << "\nESC. Back" << endl;
 
         choice = _getch();
-        cout << CURSOR_HOME;
 
         if (choice == KEY_a) {
             if (player.bread > 0) {
-                player.health += breadHealing;
-                player.bread -= 1;
+                if (player.health < player.maxHealth) {
+                    player.health += breadHealing;
+                    player.bread -= 1;
 
-                cout << CLEAR_LINE << "You ate the bread. Health is now " << player.health << ".";
+                    te_print("You ate the bread. Health is now " + to_string(player.health) + ".");
 
-                if (player.bread == 0) {
-                    more();
-                    te_print("You no longer have any bread left!");
+                    if (player.bread == 0) {
+                        more();
+                        te_print("You no longer have any bread left!");
+                    }
                 }
-
-                cout << flush;
-            }
-            else {
-                cout << CLEAR_LINE << "You have no bread left!" << flush;
-            }
-        }
-        else if (choice == KEY_d) {
-            if (player.bread > 0) {
-                player.bread -= 1;
-
-                cout << CLEAR_LINE << "You dropped the bread!" << flush;
-
-                if (player.bread == 0) {
-                    more();
-                    te_print("You no longer have any bread left!");
+                else {
+                    te_print("You are at max health!");
                 }
             }
             else {
-                cout << CLEAR_LINE << "You have no bread left!" << flush;
+                te_print("You have no bread left!");
             }
         }
         else if (choice == KEY_ESC) {
-            cout << "Returning to inventory menu..." << endl;
             clearScreen();
         }
         else {
@@ -408,81 +369,90 @@ void breadMenu(playerType &player) {
     }
 }
 
-// this is the sword menu, you can manage your sword here, you can equip it to increase your strength, upgrade it to increase your sword damage, or drop it if you want to get rid of it.
-// if you drop it you will have to find another one in the sewer or buy one from the shop!
-void swordMenu(playerType &player) {
+//Alir Louis 4/28/26
+// Shows when the player dies.
+// This is my death screen for the roguelike project.
+void deathMenu(playerType& player) {
     clearScreen();
 
-    int choice = 0;
+    cout << "\033[3H";
+    cout << "=====================================\n"
+        << "              GAME OVER              \n"
+        << "=====================================\n\n";
 
-    while (choice != KEY_ESC) {
-        cout << "\n\n==== SWORD MENU ====" << "\n"
-            << "a. Equip Sword" << "\n"
-            << "b. Upgrade Sword" << "\n"
-            << "d. Drop Sword" << "\n"
-            << "\nESC. Back" << endl;
+    cout << "              ___________\n"
+        << "             /           \\\n"
+        << "            /   R. I. P.  \\\n"
+        << "           |               |\n"
+        << "           |   HERE LIES   |\n"
+        << "           |  THE PLAYER   |\n"
+        << "           |               |\n"
+        << "           |   GAME OVER   |\n"
+        << "           |_______________|\n"
+        << "              / / / / / /\n"
+        << "             /_/ /_/ /_/\n\n";
 
-        choice = _getch();
-        cout << CURSOR_HOME;
+    cout << "The grave is quiet...\n"
+        << "Another adventurer has fallen.\n\n";
 
-        if (choice == KEY_a) {
-            cout << CLEAR_LINE;
-            cout << "You equipped the sword!" << endl;
-        }
-        else if (choice == KEY_b) {
-            cout << CLEAR_LINE;
-            cout << "You upgraded your sword!" << endl;
-        }
-        else if (choice == KEY_d) {
-            cout << CLEAR_LINE;
-            cout << "You dropped your sword!" << endl;
-        }
-        else if (choice == KEY_ESC) {
-            cout << "Returning to inventory menu..." << endl;
-        }
-        else {
-            cout << CLEAR_LINE << "Invalid choice." << endl;
-        }
+    cout << "Final Stats:\n"
+        << "Level: " << player.level << "\n"
+        << "XP: " << player.xp << "\n"
+        << "Stage: " << player.stage << "-" << player.sublevel-1 << "\n"
+        << "Gold: " << player.gold << "\n"
+        << "Total Points: " << player.level + player.gold + player.healthPotions + player.strengthPotions + (player.xp / 2) << "\n\n";
+
+    cout << "Press SPACE to end game." << endl;
+
+    while (_getch() != KEY_SPACE) {
+        te_print("Press SPACE to exit.");
     }
+
+    clearScreen();
+    showCursor();
+    exit(0);
 }
 
-// this is the armor menu, you can manage your armor here, you can equip it to increase your armor stat, 
-// upgrade it to increase your armor stat even more, or drop it if you want to get rid of it.
-// now idk how the upgrade system will work, maybe you can find armor upgrades in the sewer or buy them from the shop, 
-// or maybe you can just upgrade it with gold, idk, but for now it just says you upgraded it and increases your armor stat by 5.
-void armorMenu(playerType &player) {
+// Alir Louis 4/28/26
+// Shows when the player wins the game.
+// this is the Victory screen for the winning kill
+void winMenu(playerType& player) {
     clearScreen();
 
-    int choice = 0;
+    cout << "\033[3H";
+    cout << "=====================================\n"
+        << "              A Hero's Return        \n"
+        << "=====================================\n";
+    cout << "               \\  |  /\n"
+        << "             ---  *  ---\n"
+        << "               /  |  \\\n"
+        << "             ___________\n"
+        << "            '._==_==_=_.'\n"
+        << "            .-\\:      /-.\n"
+        << "           | (|:.     |) |\n"
+        << "            '-|:.     |-'\n"
+        << "              \\::.    /\n"
+        << "               '::. .'\n"
+        << "                 ) (\n"
+        << "               _.' '._\n"
+        << "              `-------`\n\n";
 
-    while (choice != KEY_ESC) {
-        cout << "\n\n==== ARMOR MENU ====" << "\n"
-            << "a. Equip Armor" << "\n"
-            << "b. Upgrade Armor" << "\n"
-            << "d. Drop Armor" << "\n"
-            << "\nESC. Back" << endl;
+    cout << "          V I C T O R Y ! ! !      \n";
+    cout << "The town is saved!\n"
+        << "The hero returns home, victorious from their adventure.\n\n";
 
-        choice = _getch();
-        cout << CURSOR_HOME;
+    cout << "Final Stats:\n"
+        << "Level: " << player.level << "\n"
+        << "XP: " << player.xp << "\n"
+        << "Gold: " << player.gold << "\n"
+        << "Total Points: " << player.level + player.gold + player.healthPotions + player.strengthPotions + (player.xp / 2) << "\n\n";
 
-        if (choice == KEY_a) {
-            cout << CLEAR_LINE;
-            cout << "You equipped the armor!" << endl;
-        }
-        else if (choice == KEY_b) {
-            player.armor += 5;
-            cout << CLEAR_LINE << "You upgraded your armor! Your armor stat is now " << player.armor << endl;
-        }
-        else if (choice == KEY_d) {
-            player.armor = 0;
-            cout << CLEAR_LINE << "You dropped your armor!" << endl;
-        }
-        else if (choice == KEY_ESC) {
-            cout << "Returning to inventory menu..." << endl;
-            clearScreen();
-        }
-        else {
-            cout << CLEAR_LINE << "Invalid choice." << endl;
-        }
+    cout << "Press SPACE to end game." << endl;
+    while (_getch() != KEY_SPACE) {
+        te_print("Press SPACE to exit.");
     }
+
+    clearScreen();
+    showCursor();
+    exit(0);
 }

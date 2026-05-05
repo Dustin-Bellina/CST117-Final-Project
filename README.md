@@ -87,3 +87,10 @@ Changelog
 \+ Created te_error()
 
 \+ Created more()
+
+
+---
+---
+# 5/5/2026 10:02AM
+## Endgame Update
+Finished the game!  Added WAY too much to actually remember (including 9 shiny new files) so just trust me bro™

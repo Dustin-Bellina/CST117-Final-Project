@@ -1,19 +1,33 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include <string>
+
+// Alir Louis
 struct playerType {
     int health;
+    int maxHealth;
+
     int strength;
-    int armor;
+    int armorClass;
+
     int healthPotions;
     int strengthPotions;
-    int swordDamage;
     int bread;
+
     int gold;
 
-    std::string level;
-    int x;
-    int y;
+    int level;
+
+    std::string stage;
+    int sublevel;
+    int x, y;
+    int xp;
+};
+
+// Dustin Bellina
+struct roomType {
+    int x1, y1, x2, y2;
 };
 
 #endif
